@@ -117,9 +117,9 @@ def do_dry_run(data: config.Map, languages: List[str], notes_folder: pathlib.Pat
 
 
 @click.command()
-@click.option('-c', '--config', help="Specify the notes config file to use", default=pathlib.Path("./map.yml"), type=click.Path(file_okay=True, dir_okay=False, readable=True, writable=True, exists=True, path_type=pathlib.Path))
-@click.option('-l', '--language', '--lang', help="Specify the languages to build notes for", show_default=True, default=["english"], multiple=True)
-@click.option('-d', '--dry-run', default=False, is_flag=True, help="Don't write notes files. Usefull to check which ")
+@click.option('-c', '--config', help="Specify the notes config file to use. Must be yml or json", default=pathlib.Path("./map.yml"), type=click.Path(file_okay=True, dir_okay=False, readable=True, writable=True, exists=True, path_type=pathlib.Path))
+@click.option('-l', '--language', '--lang', help="Specify the languages to build notes for.", show_default=True, default=["english"], multiple=True)
+@click.option('-d', '--dry-run', default=False, is_flag=True, help="Don't create notes files. Usefull to check what will be created and where.")
 @click.argument('folderpath', type=click.Path(file_okay=False, dir_okay=True, writable=True, path_type=pathlib.Path))
 def build(config: pathlib.Path, language: List, dry_run: bool, folderpath: pathlib.Path):
     # check to ensure path is not problematic
