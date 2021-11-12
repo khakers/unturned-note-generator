@@ -1,0 +1,8 @@
+config.py
+setup.py
+unturned_note_generator.egg-info/PKG-INFO
+unturned_note_generator.egg-info/SOURCES.txt
+unturned_note_generator.egg-info/dependency_links.txt
+unturned_note_generator.egg-info/entry_points.txt
+unturned_note_generator.egg-info/requires.txt
+unturned_note_generator.egg-info/top_level.txt

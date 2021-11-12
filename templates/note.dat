@@ -1,0 +1,11 @@
+GUID {{ note.guid }}
+Type Medium
+ID {{ note.id }}
+
+Interactability Note
+Interactability_Hint Use
+Interactability_Text_Lines {{ length }}
+
+Asset_Bundle_Version 3
+Bundle_Override_Path /Objects/Medium/Furniture/Note
+Master_Bundle_Override core.masterbundle

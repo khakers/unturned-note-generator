@@ -1,0 +1,5 @@
+Name {{ name }}
+
+{% for text in language.text %}
+Interactability_Text_Line_{{ loop.index0 }} {{ text }}
+{%- endfor %}
