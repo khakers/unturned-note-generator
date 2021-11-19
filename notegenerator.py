@@ -8,7 +8,6 @@ from yaml.loader import FullLoader
 from uuid import uuid4
 import config
 import pathlib
-import os
 import random
 import click
 
@@ -21,7 +20,7 @@ from marshmallow import Schema, fields
 from marshmallow_dataclass import class_schema
 
 from rich.console import Console
-from rich.progress import track
+from rich.progress import track, Progress
 from rich.traceback import install
 install(show_locals=True)
 
@@ -46,6 +45,7 @@ def load_json_config(file: pathlib.Path) -> config.Map:
 def save_json_config(file: pathlib.Path, map_data: config.Map):
     file.write_text(json.dumps(
         config.Map.Schema().dump(obj=map_data), indent=2))
+
 
 def smart_load_config(file: pathlib.Path) -> config.Map:
     file = file.resolve()
@@ -86,33 +86,42 @@ def do_dry_run(data: config.Map, languages: List[str], notes_folder: pathlib.Pat
     notes_folder = notes_folder.resolve()
     if not notes_folder.exists():
         console.print(f"Creating folder {notes_folder}")
-    for note in track(data.notes, description="generating notes..."):
-        if note.id == None:
-            console.print(
-                f'WARNING! "{note.name}" does not have an ID specified', style="bold red")
-            # note.id = random.randrange(10000, 65536)
-            # console.print(
-            #     f"It has been randomly assigned the ID {note.id}. You should change this.")
-        name = sanitize_filename(note.name.strip().replace(" ", "_"))
-        if not (pathlib.Path(notes_folder, name).exists()):
-            console.print(f"Note dir at {pathlib.Path(notes_folder, name)}")
-            # os.mkdir(pathlib.Path(notes_folder, name))
-        if not note.guid:
-            # note.guid = generate_guid()
-            console.print(f"{note.name} would have a GUID generated")
-        console.print(
-            f"Generating file {pathlib.Path(notes_folder, name, f'{name}.dat')}")
-        # pathlib.Path(notes_folder, name, f"{name}.dat").write_text(
-        #     template.render(note=note, length=len(note.text[1].text)))
 
-        for lang in note.text:
-            if lang.language in languages:
-                console.print(
-                    f"Generating file {pathlib.Path(notes_folder, name, f'{lang.language}.dat')}")
-            else:
-                console.print(f"skipping {lang.language} ")
-            # pathlib.Path(notes_folder, name, f"{lang.language}.dat").write_text(
-            #     lang_template.render(language=lang, name=note.name))
+    with Progress() as progress:
+
+        note_task = progress.add_task(
+            "generating notes...", total=len(data.notes))
+
+        for note in data.notes:
+            if note.id == None:
+                progress.console.print(
+                    f'WARNING! "{note.name}" does not have an ID specified', style="bold red")
+                # note.id = random.randrange(10000, 65536)
+                # console.print(
+                #     f"It has been randomly assigned the ID {note.id}. You should change this.")
+            name = sanitize_filename(note.name.strip().replace(" ", "_"))
+            if not (pathlib.Path(notes_folder, name).exists()):
+                progress.console.print(
+                    f"Note dir at {pathlib.Path(notes_folder, name)}")
+                # os.mkdir(pathlib.Path(notes_folder, name))
+            if not note.guid:
+                # note.guid = generate_guid()
+                progress.console.print(
+                    f"{note.name} would have a GUID generated")
+            progress.console.print(
+                f"Generating file {pathlib.Path(notes_folder, name, f'{name}.dat')}")
+            # pathlib.Path(notes_folder, name, f"{name}.dat").write_text(
+            #     template.render(note=note, length=len(note.text[1].text)))
+
+            for lang in note.text:
+                if lang.language in languages:
+                    progress.console.print(
+                        f"Generating file {pathlib.Path(notes_folder, name, f'{lang.language}.dat')}")
+                else:
+                    progress.console.print(f"skipping {lang.language} ")
+                # pathlib.Path(notes_folder, name, f"{lang.language}.dat").write_text(
+                #     lang_template.render(language=lang, name=note.name))
+            progress.update(note_task, advance=1)
     return
 
 
@@ -152,37 +161,44 @@ def build(config: pathlib.Path, language: List, dry_run: bool, folderpath: pathl
         folderpath.mkdir()
 
     console.print(f"Building notes in {folderpath}")
-    for note in track(map.notes, description="generating notes..."):
+    with Progress() as progress:
 
-        if note.id == None:
-            console.print(
-                f'WARNING! "{note.name}" does not have an ID specified', style="bold red")
-            note.id = random.randrange(10000, 65535)
-            console.print(
-                f"It has been randomly assigned the ID {note.id}. You should change this.")
-        if note.id > 65535:
-            console.print(
-                f'WARNING! "{note.name}" has and ID greater than that allowed by unturned', style="bold red")
-        elif note.id < 2000:
-            console.print(
-                f'WARNING! "{note.name}" has an ID less than the recommended minumum', style="bold red")
+        note_task = progress.add_task(
+            "generating notes...", total=len(map.notes))
 
-        # Get a safe file name from the notes name
-        name = sanitize_filename(note.name.strip().replace(" ", "_"))
-        note_path = pathlib.Path(folderpath, name)
+        for note in map.notes:
 
-        if not (note_path.exists()):
-            note_path.mkdir()
+            if note.id == None:
+                progress.console.print(
+                    f'WARNING! "{note.name}" does not have an ID specified', style="bold red")
+                note.id = random.randrange(10000, 65535)
+                progress.console.print(
+                    f"It has been randomly assigned the ID {note.id}. You should change this.")
+            if note.id > 65535:
+                progress.console.print(
+                    f'WARNING! "{note.name}" has and ID greater than that allowed by unturned', style="bold red")
+            elif note.id < 2000:
+                progress.console.print(
+                    f'WARNING! "{note.name}" has an ID less than the recommended minumum', style="bold red")
 
-        if not note.guid:
-            note.guid = generate_guid()
+            # Get a safe file name from the notes name
+            name = sanitize_filename(note.name.strip().replace(" ", "_"))
+            note_path = pathlib.Path(folderpath, name)
 
-        pathlib.Path(note_path, f"{name}.dat").write_text(
-            template.render(note=note, length=len(note.text[1].text)))
+            if not (note_path.exists()):
+                note_path.mkdir()
 
-        for lang in note.text:
-            if lang.language in language:
-                pathlib.Path(note_path, f"{lang.language}.dat").write_text(
-                    lang_template.render(language=lang, name=note.name))
+            if not note.guid:
+                note.guid = generate_guid()
+
+            pathlib.Path(note_path, f"{name}.dat").write_text(
+                template.render(note=note, length=len(note.text[1].text)))
+
+            for lang in note.text:
+                if lang.language in language:
+                    pathlib.Path(note_path, f"{lang.language}.dat").write_text(
+                        lang_template.render(language=lang, name=note.name))
+            progress.update(note_task, advance=1)
+
     console.log("saving config file")
     smart_save_config(map=map, file=config)

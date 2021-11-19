@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='unturned note generator',
-    version='0.1.0',
+    version='0.1.2',
     author="khakers",
     py_modules=['note-generator', 'config'],
     install_requires=[
