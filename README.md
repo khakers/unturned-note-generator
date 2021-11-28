@@ -21,7 +21,7 @@ notes:
 
 First, install Python
 
-Download the latest release and unzip it.
+Download the [latest release](https://github.com/khakers/unturned-note-generator/releases/latest) and unzip it.
 
 Open the unzipped folder, and using a terminal, run
 
